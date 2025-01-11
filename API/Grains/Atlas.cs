@@ -1,4 +1,7 @@
 ﻿using API.DTOs;
+using Orleans.Core;
+using System.Xml.Linq;
+using static Proto.Cluster.IdentityHandoverAck.Types;
 
 namespace API.Grains;
 
@@ -6,10 +9,15 @@ public sealed class Atlas : Grain, IAtlas
 {
     private readonly ILogger _logger;
     private int _batteryLevel;
-
-    public Atlas(ILogger<Atlas> logger)
+    private readonly IPersistentState<AtlasState> _atState;
+    //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
+    public Atlas(
+        ILogger<Atlas> logger,
+        [PersistentState("profile", "profileStore")] IPersistentState<AtlasState> atState
+        )
     {
         _logger = logger;
+        _atState = atState;
     }
 
     public Task<int> GetBatteryLevel()
@@ -38,18 +46,19 @@ public sealed class Atlas : Grain, IAtlas
             """);
     }
 
-    public Task ProcessMsg(object msg)
+    public async Task ProcessMsg(object msg)
     {
         if (msg is AtlasUpdate au)
         {
             Console.WriteLine($"Battery on {IdentityString}: {au.Battery}");
+
+            _atState.State.Battery = au.Battery;
+            await _atState.WriteStateAsync();
         }
         else
         {
             Console.WriteLine("Message type not recognized");
         }
-
-        return Task.CompletedTask;
     }
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
