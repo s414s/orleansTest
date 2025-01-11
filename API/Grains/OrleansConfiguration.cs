@@ -8,8 +8,10 @@ public static class OrleansConfiguration
     {
         builder.Host.UseOrleans(siloBuilder =>
         {
+            siloBuilder.AddMemoryStreams("StreamProvider");
             siloBuilder.UseLocalhostClustering();
             siloBuilder.AddMemoryGrainStorage("atlas");
+            //siloBuilder.AddMemoryStreams("StreamProvider");
             siloBuilder.UseDashboard();
             siloBuilder.Configure<ClusterOptions>(options =>
             {

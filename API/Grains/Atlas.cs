@@ -1,4 +1,6 @@
-﻿namespace API.Grains;
+﻿using API.DTOs;
+
+namespace API.Grains;
 
 public sealed class Atlas : Grain, IAtlas
 {
@@ -36,6 +38,20 @@ public sealed class Atlas : Grain, IAtlas
             """);
     }
 
+    public Task ProcessMsg(object msg)
+    {
+        if (msg is AtlasUpdate au)
+        {
+            Console.WriteLine($"Battery on {IdentityString}: {au.Battery}");
+        }
+        else
+        {
+            Console.WriteLine("Message type not recognized");
+        }
+
+        return Task.CompletedTask;
+    }
+
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         Console.WriteLine($"Activating Grain {IdentityString}");
@@ -44,8 +60,8 @@ public sealed class Atlas : Grain, IAtlas
 }
 
 
-[GenerateSerializer, Alias(nameof(UrlDetails))]
-public sealed record class UrlDetails
+[GenerateSerializer, Alias(nameof(AtlasDetails))]
+public sealed record class AtlasDetails
 {
     [Id(0)]
     public string Imei { get; set; } = "";

@@ -15,17 +15,14 @@ public static class ActorSystemConfiguration
         serviceCollection.AddSingleton(provider =>
         {
             // actor system configuration
-
             var actorSystemConfig = ActorSystemConfig
                 .Setup();
 
             // remote configuration
-
             var remoteConfig = GrpcNetRemoteConfig
                 .BindToLocalhost();
 
             // cluster configuration
-
             var clusterConfig = ClusterConfig
                 .Setup(
                     clusterName: "ProtoClusterTutorial",
@@ -34,7 +31,6 @@ public static class ActorSystemConfiguration
                 );
 
             // create the actor system
-
             return new ActorSystem(actorSystemConfig)
                 .WithServiceProvider(provider)
                 .WithRemote(remoteConfig)

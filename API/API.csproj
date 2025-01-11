@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Orleans.BroadcastChannel" Version="9.0.1" />
     <PackageReference Include="Microsoft.Orleans.Client" Version="9.0.1" />
     <PackageReference Include="Microsoft.Orleans.Core" Version="9.0.1" />
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="9.0.1" />
@@ -17,6 +18,7 @@
     <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.7.2" />
     <PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.7.2" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="9.0.1" />
     <PackageReference Include="OrleansDashboard" Version="8.2.0" />
     <PackageReference Include="Proto.Actor" Version="1.7.0" />
     <PackageReference Include="Proto.Cluster" Version="1.7.0" />
@@ -24,6 +26,7 @@
     <PackageReference Include="Proto.Persistence" Version="1.7.0" />
     <PackageReference Include="Proto.Remote" Version="1.7.0" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+    <PackageReference Include="RabbitMQ.Stream.Client" Version="1.8.9" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 

@@ -4,6 +4,8 @@ using API.RabbitConsumer;
 
 //https://github.com/dotnet/samples/tree/main/orleans/GPSTracker
 //https://learn.microsoft.com/es-es/samples/dotnet/samples/orleans-gps-device-tracker-sample/
+//https://learn.microsoft.com/en-us/dotnet/orleans/streaming/?pivots=orleans-7-0
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,8 +22,9 @@ builder.Services.AddHostedService<RabbitMqConsumerService>();
 
 builder.AddOrleans();
 
-builder.Services.AddActorSystem();
-builder.Services.AddHostedService<ActorSystemClusterHostedService>();
+
+//builder.Services.AddActorSystem();
+//builder.Services.AddHostedService<ActorSystemClusterHostedService>();
 
 //=============
 

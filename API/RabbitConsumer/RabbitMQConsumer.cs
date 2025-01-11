@@ -1,6 +1,8 @@
-﻿using RabbitMQ.Client;
+﻿using API.DTOs;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Text.Json;
 
 namespace API.RabbitConsumer;
 
@@ -38,6 +40,8 @@ public class RabbitMqConsumerService : IHostedService
         {
             var body = eventArgs.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
+
+            //var msg = JsonSerializer.Deserialize<AtlasUpdate>(message);
 
             Console.WriteLine($"Received message: {message}");
 
