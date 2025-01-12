@@ -20,8 +20,11 @@ public class RabbitMqConsumerService : IHostedService
         _grains = grains;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
+        await Task.Delay(5000, cancellationToken);
+        Console.WriteLine("===========Starting WORKER=============");
+
         // Initialize RabbitMQ connection and channel
         var factory = new ConnectionFactory()
         {
@@ -73,7 +76,7 @@ public class RabbitMqConsumerService : IHostedService
                               consumer: consumer);
 
         Console.WriteLine("RabbitMQ Consumer started.");
-        return Task.CompletedTask;
+        //return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

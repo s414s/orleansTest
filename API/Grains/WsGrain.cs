@@ -44,7 +44,7 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
     {
         if (this.GetPrimaryKeyString() == "GeneralWS")
         {
-            Console.WriteLine($"G_WS => msg {item.Imei} \t {item.Long}-{item.Lat} \t {item.Color}");
+            Console.WriteLine($"G_WS => Imei {item.Imei} \t {item.Long} \t {item.Lat} \t {item.Color}");
         }
 
         return Task.CompletedTask;

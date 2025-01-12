@@ -47,10 +47,10 @@ public sealed class Atlas : Grain, IAtlas
 
         var changeEvent = new AtlasChangeEvent
         {
-            Color = _atState.State.Battery > 50 ? "GREEN" : "RED",
-            Long = _atState.State.Battery,
-            Lat = _atState.State.Battery,
             Imei = this.GetPrimaryKeyString(),
+            Long = _atState.State.Long,
+            Lat = _atState.State.Lat,
+            Color = _atState.State.Battery > 50 ? "GREEN" : "RED",
         };
 
         // Console.WriteLine($"Sending to stream: {changeEvent.Color}");
