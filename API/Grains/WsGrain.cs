@@ -6,20 +6,16 @@ namespace API.Grains;
 //https://github.com/OrleansContrib/SignalR.Orleans
 public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
 {
+    // When the grain is activated (created/loaded), this method is automatically called
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         // Always call the base activation first
         await base.OnActivateAsync(cancellationToken);
 
-        //Console.WriteLine($"========================================");
-        //Console.WriteLine($"Activating WS Grain {IdentityString} with IMEI: {this.GetPrimaryKeyString()}");
-        //Console.WriteLine($"========================================");
-
         // Get the IMEI from the grain's key
         // If you created the grain with GrainFactory.GetGrain<IWsGrain>("device123"),
         // then "device123" is the primary key
 
-        // Ya se suscriben con el metodo
         //await SubscribeToAtlasStream(this.GetPrimaryKeyString());
     }
 

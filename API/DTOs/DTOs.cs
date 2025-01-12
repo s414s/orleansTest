@@ -1,8 +1,15 @@
 ﻿namespace API.DTOs;
 
-public record AtlasUpdate(string Imei, int Battery);
+[GenerateSerializer]
+public record AtlasUpdate
+{
+    [Id(0)]
+    public string Imei { get; set; } = "";
 
-public record AtlasSnapshot(string Imei, int Battery);
+    [Id(1)]
+    public int Battery { get; set; }
+
+};
 
 [GenerateSerializer]
 public class AtlasState
@@ -14,7 +21,7 @@ public class AtlasState
     [Id(1)]
     public double Long { get; set; }
 
-    [Id(3)]
+    [Id(2)]
     public double Lat { get; set; }
 };
 

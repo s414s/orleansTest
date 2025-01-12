@@ -1,5 +1,4 @@
 using API.Grains;
-using API.Hubs;
 using API.ProtoActor;
 using API.RabbitConsumer;
 
@@ -44,7 +43,8 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 // Map the SignalR Hub to an endpoint
-app.MapHub<ChatHub>("/chat");
+//app.MapHub<ChatHub>("/chat");
+//app.MapHub<LocationHub>("/location");
 
 app.MapControllers();
 

@@ -1,7 +1,4 @@
-﻿using API.Hubs;
-using Microsoft.Extensions.Options;
-using Orleans.Configuration;
-using Orleans.Providers;
+﻿using Orleans.Configuration;
 
 namespace API.Grains;
 
@@ -38,9 +35,7 @@ public static class OrleansConfiguration
                     logging.SetMinimumLevel(LogLevel.Debug); // Enable detailed logs
                 });
 
-            siloBuilder
-                .UseSignalR()
-                .RegisterHub<ChatHub>();
+            //siloBuilder.UseSignalR().RegisterHub<ChatHub>();
 
             siloBuilder.Configure<ClusterOptions>(options =>
             {
