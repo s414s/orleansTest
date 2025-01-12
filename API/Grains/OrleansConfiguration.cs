@@ -10,24 +10,43 @@ public static class OrleansConfiguration
 {
     public static void AddOrleans(this WebApplicationBuilder builder)
     {
-        _ = builder.Host.UseOrleans(siloBuilder =>
+        builder.Host.UseOrleans(siloBuilder =>
         {
             siloBuilder.UseLocalhostClustering()
-                .AddMemoryStreams("StreamProvider")
+                .AddMemoryStreams<DefaultMemoryMessageBodySerializer>("StreamProvider", b =>
+                {
+                    b.ConfigurePullingAgent(ob => ob.Configure(options =>
+                    {
+                        //options.StreamInactivityPeriod = TimeSpan.FromDays(3650);
+                        options.StreamInactivityPeriod = TimeSpan.FromDays(1);
+                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(10);
+                        options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
+                    }));
+                })
                 .AddMemoryGrainStorage("PubSubStore")
-                .UseDashboard()
+                .UseDashboard(options =>
+                {
+                    options.Username = "root";
+                    options.Password = "root";
+                })
                 .ConfigureLogging(logging =>
                 {
                     logging.AddConsole();
                     logging.SetMinimumLevel(LogLevel.Debug); // Enable detailed logs
-                })
-
-            ;
+                });
 
             siloBuilder.Configure<ClusterOptions>(options =>
             {
                 options.ClusterId = "dev-cluster";
                 options.ServiceId = "orleans-api";
+            });
+
+            siloBuilder.Configure<GrainCollectionOptions>(options =>
+            {
+                options.CollectionAge = TimeSpan.FromDays(1);
+
+                //options.CollectionQuantum = TimeSpan.FromSeconds(1);
+                //options.CollectionAge = TimeSpan.FromSeconds(10);
             });
 
             siloBuilder.AddAdoNetGrainStorage(

@@ -1,4 +1,6 @@
 ﻿using API.DTOs;
+using API.Grains;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -11,6 +13,12 @@ public class RabbitMqConsumerService : IHostedService
     private readonly string _queueName = "atlas";
     private IConnection? _connection;
     private IModel? _channel;
+    private IGrainFactory _grains;
+
+    public RabbitMqConsumerService(IGrainFactory grains)
+    {
+        _grains = grains;
+    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -36,16 +44,27 @@ public class RabbitMqConsumerService : IHostedService
 
         // Create a consumer to listen for messages
         var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += (model, eventArgs) =>
+        consumer.Received += async (model, eventArgs) =>
         {
-            var body = eventArgs.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
+            try
+            {
+                var body = eventArgs.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
 
-            //var msg = JsonSerializer.Deserialize<AtlasUpdate>(message);
+                var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
+                    ?? throw new Exception("msg is NULL");
 
-            Console.WriteLine($"Received message: {message}");
+                Console.WriteLine($"Received message on Rabbit Consumer: {message}");
 
-            _channel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
+                var atlasGrain = _grains.GetGrain<IAtlas>(msg.Imei);
+                await atlasGrain.UpdateFromRabbit(msg);
+
+                _channel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         };
 
         // Start consuming messages

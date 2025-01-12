@@ -1,8 +1,4 @@
 ﻿using API.DTOs;
-using Orleans.Core;
-using Orleans.Providers;
-using System.Xml.Linq;
-using static Proto.Cluster.IdentityHandoverAck.Types;
 
 namespace API.Grains;
 
@@ -33,6 +29,15 @@ public sealed class Atlas : Grain, IAtlas
         _batteryLevel = new Random().Next(1, 100);
         return Task.CompletedTask;
     }
+
+    public async Task UpdateFromRabbit(RabbitMQMessage msg)
+    {
+        Console.WriteLine($"RabbitMQ msg received on {IdentityString} with bat: {msg.Battery}");
+
+        _atState.State.Battery = msg.Battery;
+        await _atState.WriteStateAsync();
+    }
+
 
     public async Task<string> SayHello(string greeting)
     {
@@ -75,6 +80,11 @@ public sealed class Atlas : Grain, IAtlas
     {
         Console.WriteLine($"Activating Grain {IdentityString}");
         await base.OnActivateAsync(cancellationToken);
+    }
+
+    public Task<AtlasState> GetState()
+    {
+        return Task.FromResult(_atState.State);
     }
 }
 

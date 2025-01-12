@@ -1,6 +1,4 @@
-﻿using API.Grains;
-
-namespace API.DTOs;
+﻿namespace API.DTOs;
 
 public record AtlasUpdate(string Imei, int Battery);
 
@@ -12,3 +10,6 @@ public class AtlasState
     //public string? Imei { get; set; }
     public int Battery { get; set; }
 };
+
+[GenerateSerializer]
+public record RabbitMQMessage(string Imei, int Battery);

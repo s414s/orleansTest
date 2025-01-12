@@ -15,9 +15,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Rabbit Consumer
-builder.Services.AddHostedService<RabbitMqConsumerService>();
-
 //=============
 
 builder.AddOrleans();
@@ -27,6 +24,9 @@ builder.AddOrleans();
 //builder.Services.AddHostedService<ActorSystemClusterHostedService>();
 
 //=============
+
+// Rabbit Consumer
+builder.Services.AddHostedService<RabbitMqConsumerService>();
 
 var app = builder.Build();
 
@@ -52,6 +52,15 @@ app.MapGet("/orleans/{imei}",
 
         await atlasGrain.SayHello("Hola caracola");
 
+        var batteryLevel = await atlasGrain.GetBatteryLevel();
+
+        return Results.Ok(batteryLevel);
+    });
+
+app.MapGet("/orleansGetInfo/{imei}",
+    static async (IGrainFactory grains, HttpRequest request, string imei) =>
+    {
+        var atlasGrain = grains.GetGrain<IAtlas>(imei);
         var batteryLevel = await atlasGrain.GetBatteryLevel();
 
         return Results.Ok(batteryLevel);
