@@ -1,5 +1,6 @@
 ﻿using API.DTOs;
 using Orleans.Core;
+using Orleans.Providers;
 using System.Xml.Linq;
 using static Proto.Cluster.IdentityHandoverAck.Types;
 
@@ -13,7 +14,7 @@ public sealed class Atlas : Grain, IAtlas
     //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
     public Atlas(
         ILogger<Atlas> logger,
-        [PersistentState("profile", "profileStore")] IPersistentState<AtlasState> atState
+        [PersistentState("atlasState", "AtlasStateStorageProvider")] IPersistentState<AtlasState> atState
         )
     {
         _logger = logger;
@@ -22,8 +23,9 @@ public sealed class Atlas : Grain, IAtlas
 
     public Task<int> GetBatteryLevel()
     {
-        _batteryLevel++;
-        return Task.FromResult(_batteryLevel);
+        //_batteryLevel++;
+        //return Task.FromResult(_batteryLevel);
+        return Task.FromResult(_atState.State.Battery);
     }
 
     public Task ReadMsg(string msg)
@@ -32,18 +34,26 @@ public sealed class Atlas : Grain, IAtlas
         return Task.CompletedTask;
     }
 
-    public Task<string> SayHello(string greeting)
+    public async Task<string> SayHello(string greeting)
     {
         Console.WriteLine($"Hello from {IdentityString} with msg: {greeting}");
+
+        Console.WriteLine($"Battery BEFORE {_atState.State.Battery}");
+
+        var level = new Random().Next(1, 100);
+        _atState.State.Battery = level;
+        await _atState.WriteStateAsync();
+
+        Console.WriteLine($"Battery AFTER {_atState.State.Battery}");
 
         //_logger.LogInformation("""
         //    SayHello message received on ID: greeting = "{Greeting}"
         //    """,
         //    greeting);
 
-        return Task.FromResult($"""
+        return $"""
             Client said: "{greeting}", so HelloGrain says: Hello!
-            """);
+            """;
     }
 
     public async Task ProcessMsg(object msg)

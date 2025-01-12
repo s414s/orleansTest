@@ -1,12 +1,14 @@
-﻿namespace API.DTOs;
+﻿using API.Grains;
+
+namespace API.DTOs;
 
 public record AtlasUpdate(string Imei, int Battery);
 
 public record AtlasSnapshot(string Imei, int Battery);
 
-[Serializable]
+[GenerateSerializer]
 public class AtlasState
 {
-    public string Imei { get; set; }
+    //public string? Imei { get; set; }
     public int Battery { get; set; }
 };
