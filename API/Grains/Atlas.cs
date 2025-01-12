@@ -9,7 +9,7 @@ public sealed class Atlas : Grain, IAtlas
     private int _batteryLevel;
     private readonly IPersistentState<AtlasState> _atState;
     private IAsyncStream<AtlasChangeEvent> _stream;
-    private IAsyncStream<AtlasChangeEvent> _generalStream;
+    //private IAsyncStream<AtlasChangeEvent> _generalStream;
     private string _streamProvider = "StreamProvider";
 
     //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
@@ -104,8 +104,8 @@ public sealed class Atlas : Grain, IAtlas
             .GetStream<AtlasChangeEvent>(StreamId.Create("AtlasChange", this.GetPrimaryKeyString()));
 
         // Stream Individual
-        var wsGrain = GrainFactory.GetGrain<IWsGrain>(this.GetPrimaryKeyString());
-        await wsGrain.SubscribeToAtlasStream(this.GetPrimaryKeyString());
+        //var wsGrain = GrainFactory.GetGrain<IWsGrain>(this.GetPrimaryKeyString());
+        //await wsGrain.SubscribeToAtlasStream(this.GetPrimaryKeyString());
 
         var generalWSGrain = GrainFactory.GetGrain<IWsGrain>("GeneralWS");
         await generalWSGrain.SubscribeToAtlasStream(this.GetPrimaryKeyString());
