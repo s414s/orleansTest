@@ -54,7 +54,7 @@ public class RabbitMqConsumerService : IHostedService
                 var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
                     ?? throw new Exception("msg is NULL");
 
-                Console.WriteLine($"Received message on Rabbit Consumer: {message}");
+                // Console.WriteLine($"Received message on Rabbit Consumer: {message}");
 
                 var atlasGrain = _grains.GetGrain<IAtlas>(msg.Imei);
                 await atlasGrain.UpdateFromRabbit(msg);

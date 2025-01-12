@@ -1,4 +1,5 @@
 ﻿using API.DTOs;
+using Orleans.Streams;
 
 namespace API.Grains;
 
@@ -7,6 +8,10 @@ public sealed class Atlas : Grain, IAtlas
     private readonly ILogger _logger;
     private int _batteryLevel;
     private readonly IPersistentState<AtlasState> _atState;
+    private IAsyncStream<AtlasChangeEvent> _stream;
+    private IAsyncStream<AtlasChangeEvent> _generalStream;
+    private string _streamProvider = "StreamProvider";
+
     //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
     public Atlas(
         ILogger<Atlas> logger,
@@ -32,10 +37,24 @@ public sealed class Atlas : Grain, IAtlas
 
     public async Task UpdateFromRabbit(RabbitMQMessage msg)
     {
-        Console.WriteLine($"RabbitMQ msg received on {IdentityString} with bat: {msg.Battery}");
+        //Console.WriteLine($"RabbitMQ msg received on {IdentityString} battery: {msg.Battery}");
 
         _atState.State.Battery = msg.Battery;
+        _atState.State.Long = msg.Long;
+        _atState.State.Lat = msg.Lat;
+
         await _atState.WriteStateAsync();
+
+        var changeEvent = new AtlasChangeEvent
+        {
+            Color = _atState.State.Battery > 50 ? "GREEN" : "RED",
+            Long = _atState.State.Battery,
+            Lat = _atState.State.Battery,
+            Imei = this.GetPrimaryKeyString(),
+        };
+
+        // Console.WriteLine($"Sending to stream: {changeEvent.Color}");
+        await _stream.OnNextAsync(changeEvent);
     }
 
 
@@ -78,23 +97,24 @@ public sealed class Atlas : Grain, IAtlas
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"Activating Grain {IdentityString}");
         await base.OnActivateAsync(cancellationToken);
+
+        // Initialize the stream
+        _stream = this.GetStreamProvider(_streamProvider)
+            .GetStream<AtlasChangeEvent>(StreamId.Create("AtlasChange", this.GetPrimaryKeyString()));
+
+        // Stream Individual
+        var wsGrain = GrainFactory.GetGrain<IWsGrain>(this.GetPrimaryKeyString());
+        await wsGrain.SubscribeToAtlasStream(this.GetPrimaryKeyString());
+
+        var generalWSGrain = GrainFactory.GetGrain<IWsGrain>("GeneralWS");
+        await generalWSGrain.SubscribeToAtlasStream(this.GetPrimaryKeyString());
+
+        //Console.WriteLine($"Activating Grain {IdentityString}");
     }
 
     public Task<AtlasState> GetState()
     {
         return Task.FromResult(_atState.State);
     }
-}
-
-
-[GenerateSerializer, Alias(nameof(AtlasDetails))]
-public sealed record class AtlasDetails
-{
-    [Id(0)]
-    public string Imei { get; set; } = "";
-
-    [Id(1)]
-    public int Battery { get; set; }
 }

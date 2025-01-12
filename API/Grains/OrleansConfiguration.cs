@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using API.Hubs;
+using Microsoft.Extensions.Options;
 using Orleans.Configuration;
 using Orleans.Providers;
 
@@ -12,17 +13,19 @@ public static class OrleansConfiguration
     {
         builder.Host.UseOrleans(siloBuilder =>
         {
-            siloBuilder.UseLocalhostClustering()
-                .AddMemoryStreams<DefaultMemoryMessageBodySerializer>("StreamProvider", b =>
-                {
-                    b.ConfigurePullingAgent(ob => ob.Configure(options =>
-                    {
-                        //options.StreamInactivityPeriod = TimeSpan.FromDays(3650);
-                        options.StreamInactivityPeriod = TimeSpan.FromDays(1);
-                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(10);
-                        options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
-                    }));
-                })
+            siloBuilder
+                .UseLocalhostClustering()
+                //.AddMemoryStreams<DefaultMemoryMessageBodySerializer>("StreamProvider", b =>
+                //{
+                //    b.ConfigurePullingAgent(ob => ob.Configure(options =>
+                //    {
+                //        //options.StreamInactivityPeriod = TimeSpan.FromDays(3650);
+                //        options.StreamInactivityPeriod = TimeSpan.FromDays(1);
+                //        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(10);
+                //        options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
+                //    }));
+                //})
+                .AddMemoryStreams("StreamProvider")
                 .AddMemoryGrainStorage("PubSubStore")
                 .UseDashboard(options =>
                 {
@@ -34,6 +37,10 @@ public static class OrleansConfiguration
                     logging.AddConsole();
                     logging.SetMinimumLevel(LogLevel.Debug); // Enable detailed logs
                 });
+
+            siloBuilder
+                .UseSignalR()
+                .RegisterHub<ChatHub>();
 
             siloBuilder.Configure<ClusterOptions>(options =>
             {

@@ -9,5 +9,4 @@ public interface IAtlas : IGrainWithStringKey
     Task<string> SayHello(string greeting);
     Task UpdateFromRabbit(RabbitMQMessage msg);
     Task<AtlasState> GetState();
-
 }

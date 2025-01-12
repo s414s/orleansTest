@@ -1,4 +1,5 @@
 using API.Grains;
+using API.Hubs;
 using API.ProtoActor;
 using API.RabbitConsumer;
 
@@ -28,6 +29,9 @@ builder.AddOrleans();
 // Rabbit Consumer
 builder.Services.AddHostedService<RabbitMqConsumerService>();
 
+// Add SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -38,6 +42,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
+
+// Map the SignalR Hub to an endpoint
+app.MapHub<ChatHub>("/chat");
 
 app.MapControllers();
 
