@@ -54,3 +54,22 @@ public record AtlasChangeEvent
     public required string Color { get; init; }
 }
 
+// =======================================
+// =======================================
+
+[GenerateSerializer]
+public class Pt
+{
+    [Id(0)]
+    public required double Lat { get; set; }
+
+    [Id(1)]
+    public required double Lng { get; set; }
+
+    [Id(2)]
+    public required string Name { get; set; }
+
+    [Id(3)]
+    public required char C { get; set; }
+};
+

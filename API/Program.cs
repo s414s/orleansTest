@@ -15,6 +15,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 //=============
 
 builder.AddOrleans();
@@ -41,6 +51,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
+app.UseCors();
 
 // Map the SignalR Hub to an endpoint
 //app.MapHub<ChatHub>("/chat");
@@ -71,6 +82,17 @@ app.MapGet("/orleansGetInfo/{imei}",
         var batteryLevel = await atlasGrain.GetBatteryLevel();
 
         return Results.Ok(batteryLevel);
+    });
+
+
+
+//====================
+//====================
+app.MapGet("/getAllPoints",
+    static async (IGrainFactory grains, HttpRequest request) =>
+    {
+        var wsGrain = grains.GetGrain<IWsGrain>("GeneralWS");
+        return Results.Ok(await wsGrain.GetAllPoints());
     });
 
 app.Run();
