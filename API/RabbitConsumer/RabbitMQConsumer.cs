@@ -14,7 +14,7 @@ public class RabbitMqConsumerService : IHostedService
     private IConnection? _connection;
     private IModel? _channel;
     private IGrainFactory _grains;
-    private readonly SemaphoreSlim _semaphore = new(40); // Adjust limit as needed
+    private readonly SemaphoreSlim _semaphore = new(20); // Adjust limit as needed
 
     public RabbitMqConsumerService(IGrainFactory grains)
     {
@@ -34,6 +34,7 @@ public class RabbitMqConsumerService : IHostedService
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
+            //ConsumerDispatchConcurrency = 200,
         };
 
         _connection = factory.CreateConnection();
@@ -48,6 +49,7 @@ public class RabbitMqConsumerService : IHostedService
 
         // Create a consumer to listen for messages
         var consumer = new EventingBasicConsumer(_channel);
+        //var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.Received += async (model, eventArgs) =>
         {
             await _semaphore.WaitAsync();
@@ -77,7 +79,9 @@ public class RabbitMqConsumerService : IHostedService
         };
 
         // Start consuming messages
-        _channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
+        var consumerTag = _channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
+        //string consumerTag = await channel.BasicConsumeAsync(queueName, false, consumer);
+        //_channel.BasicCancel(consumerTag);
 
         Console.WriteLine("RabbitMQ Consumer started.");
         //return Task.CompletedTask;
