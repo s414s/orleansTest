@@ -37,7 +37,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            ConsumerDispatchConcurrency = 2,
+            ConsumerDispatchConcurrency = 1,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
@@ -51,8 +51,6 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             autoDelete: false,
             arguments: null,
             cancellationToken: cancellationToken);
-
-        Console.WriteLine(" [*] Waiting for messages.");
 
         // Create a consumer to listen for messages
         _consumer = new AsyncEventingBasicConsumer(_channel);
