@@ -46,6 +46,7 @@ public static class OrleansConfiguration
             siloBuilder.Configure<GrainCollectionOptions>(options =>
             {
                 options.CollectionAge = TimeSpan.FromDays(1);
+                options.ActivationTimeout = TimeSpan.FromMinutes(5);
 
                 //options.CollectionQuantum = TimeSpan.FromSeconds(1);
                 //options.CollectionAge = TimeSpan.FromSeconds(10);
