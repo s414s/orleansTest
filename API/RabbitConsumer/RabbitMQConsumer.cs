@@ -1,24 +1,27 @@
 ﻿using API.DTOs;
 using API.Grains;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Channels;
 
 namespace API.RabbitConsumer;
 
-public class RabbitMqConsumerService : IHostedService
+public class RabbitMqConsumerService : IHostedService, IDisposable
 {
     private readonly string _queueName = "atlas";
-    private IConnection? _connection;
-    private IModel? _channel;
     private IGrainFactory _grains;
-    private readonly SemaphoreSlim _semaphore = new(20); // Adjust limit as needed
+    private IConnection? _connection;
+    private IChannel? _channel;
+    private AsyncEventingBasicConsumer? _consumer;
+    private readonly CancellationTokenSource _cancellationTokenSource;
 
     public RabbitMqConsumerService(IGrainFactory grains)
     {
         _grains = grains;
+        _cancellationTokenSource = new CancellationTokenSource();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -27,74 +30,107 @@ public class RabbitMqConsumerService : IHostedService
         Console.WriteLine("===========Starting WORKER=============");
 
         // Initialize RabbitMQ connection and channel
-        var factory = new ConnectionFactory()
+        var factory = new ConnectionFactory
         {
             HostName = "localhost",
             Port = 5672,
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            //ConsumerDispatchConcurrency = 200,
+            ConsumerDispatchConcurrency = 2,
         };
 
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
+        _connection = await factory.CreateConnectionAsync(cancellationToken);
+        _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         // Declare the queue
-        _channel.QueueDeclare(queue: _queueName,
-                              durable: false,
-                              exclusive: false,
-                              autoDelete: false,
-                              arguments: null);
+        await _channel.QueueDeclareAsync(
+            queue: _queueName,
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
+
+        Console.WriteLine(" [*] Waiting for messages.");
 
         // Create a consumer to listen for messages
-        var consumer = new EventingBasicConsumer(_channel);
-        //var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.Received += async (model, eventArgs) =>
-        {
-            await _semaphore.WaitAsync();
-            try
-            {
-                var body = eventArgs.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-
-                var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
-                    ?? throw new Exception("msg is NULL");
-
-                // Console.WriteLine($"Received message on Rabbit Consumer: {message}");
-
-                var atlasGrain = _grains.GetGrain<IAtlas>(msg.Imei);
-                await atlasGrain.UpdateFromRabbit(msg);
-
-                _channel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        };
+        _consumer = new AsyncEventingBasicConsumer(_channel);
+        _consumer.ReceivedAsync += HandleMessageAsync;
 
         // Start consuming messages
-        var consumerTag = _channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
-        //string consumerTag = await channel.BasicConsumeAsync(queueName, false, consumer);
-        //_channel.BasicCancel(consumerTag);
+        var consumerTag = await _channel.BasicConsumeAsync(_queueName, autoAck: false, consumer: _consumer, cancellationToken: cancellationToken);
 
         Console.WriteLine("RabbitMQ Consumer started.");
-        //return Task.CompletedTask;
+
+        // Add connection shutdown event handler
+        //_connection.ConnectionShutdownAsync += (sender, args) =>
+        //{
+        //    Console.WriteLine($"RabbitMQ connection shut down: {args.ReplyText}");
+        //};
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    private async Task HandleMessageAsync(object? sender, BasicDeliverEventArgs eventArgs)
     {
-        Console.WriteLine("Stopping RabbitMQ Consumer...");
+        try
+        {
+            var body = eventArgs.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+            Console.WriteLine($" [x] Received {message}");
 
-        _channel?.Close();
-        _connection?.Close();
+            var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
+                ?? throw new Exception("msg is NULL");
 
-        return Task.CompletedTask;
+            var atlasGrain = _grains.GetGrain<IAtlas>(msg.Imei);
+            await atlasGrain.UpdateFromRabbit(msg);
+
+            if (_channel != null && !_channel.IsClosed)
+            {
+                await _channel.BasicAckAsync(
+                    deliveryTag: eventArgs.DeliveryTag,
+                    multiple: false,
+                    cancellationToken: _cancellationTokenSource.Token);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing message: {ex}");
+            // Optionally implement retry logic or dead letter queue here
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _cancellationTokenSource.Cancel();
+
+            if (_consumer != null)
+            {
+                _consumer.ReceivedAsync -= HandleMessageAsync;
+            }
+
+            if (_channel != null && !_channel.IsClosed)
+            {
+                await _channel.CloseAsync(cancellationToken);
+            }
+
+            if (_connection != null && _connection.IsOpen)
+            {
+                await _connection.CloseAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error stopping RabbitMQ consumer: {ex}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _cancellationTokenSource.Dispose();
+        _channel?.Dispose();
+        _connection?.Dispose();
     }
 }
 
