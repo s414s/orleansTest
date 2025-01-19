@@ -1,4 +1,5 @@
 using API.Grains;
+using API.Hubs;
 using API.ProtoActor;
 using API.RabbitConsumer;
 
@@ -54,8 +55,8 @@ app.UseAuthorization();
 app.UseCors();
 
 // Map the SignalR Hub to an endpoint
-//app.MapHub<ChatHub>("/chat");
 //app.MapHub<LocationHub>("/location");
+app.MapHub<ViewportHub>("viewport");
 
 app.MapControllers();
 
@@ -83,6 +84,13 @@ app.MapGet("/orleansGetInfo/{imei}",
 
         return Results.Ok(batteryLevel);
     });
+
+//app.MapPost("/broacast", static async (IGrainFactory grains) =>
+//    {
+//        var grain = grains.GetGrain<IWsGrain>("GeneralWS");
+//        //var batteryLevel = await atlasGrain.GetBatteryLevel();
+//        //return Results.Ok(batteryLevel);
+//    });
 
 
 

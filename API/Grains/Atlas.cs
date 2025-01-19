@@ -8,7 +8,7 @@ public sealed class Atlas : Grain, IAtlas
     private readonly ILogger _logger;
     private int _batteryLevel;
     private readonly IPersistentState<AtlasState> _atState;
-    private IAsyncStream<AtlasChangeEvent> _stream;
+    private IAsyncStream<AtlasChangeEvent>? _stream;
     //private IAsyncStream<AtlasChangeEvent> _generalStream;
     private string _streamProvider = "StreamProvider";
 
@@ -20,6 +20,7 @@ public sealed class Atlas : Grain, IAtlas
     {
         _logger = logger;
         _atState = atState;
+        //_batteryLevel = 0;
     }
 
     public Task<int> GetBatteryLevel()
@@ -54,7 +55,10 @@ public sealed class Atlas : Grain, IAtlas
         };
 
         // Console.WriteLine($"Sending to stream: {changeEvent.Color}");
-        await _stream.OnNextAsync(changeEvent);
+        if (_stream is not null)
+        {
+            await _stream.OnNextAsync(changeEvent);
+        }
     }
 
 

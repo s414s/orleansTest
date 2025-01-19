@@ -38,11 +38,11 @@ public class SampleConsumerObserver<T> : IAsyncObserver<T>
 
 public class SampleStreaming_ConsumerGrain : Grain, ISampleStreaming_ConsumerGrain
 {
-    private IAsyncObservable<int> consumer;
+    private IAsyncObservable<int>? consumer;
     internal int numConsumedItems;
     internal ILogger logger;
-    private IAsyncObserver<int> consumerObserver;
-    private StreamSubscriptionHandle<int> consumerHandle;
+    private IAsyncObserver<int>? consumerObserver;
+    private StreamSubscriptionHandle<int>? consumerHandle;
 
     public SampleStreaming_ConsumerGrain(ILoggerFactory loggerFactory)
     {
