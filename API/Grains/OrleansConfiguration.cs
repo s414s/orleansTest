@@ -59,7 +59,7 @@ public static class OrleansConfiguration
                     // https://github.com/dotnet/orleans/issues/7644
                     // https://github.com/dotnet/orleans/tree/main/src/AdoNet/Shared
                     options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
-                    options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209";
+                    options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209;Multiplexing=true";
                 });
 
             siloBuilder.UseAdoNetClustering(
