@@ -12,6 +12,8 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
     private readonly IHubContext<ViewportHub, IViewportClient> _hub;
     private readonly HashSet<string> _connections = [];
     private IAsyncStream<AtlasChangeEvent>? _stream;
+    private string _streamProvider = "StreamProvider";
+    private StreamSubscriptionHandle<AtlasChangeEvent>? _subscription;
 
     public WsGrain(IHubContext<ViewportHub, IViewportClient> hub)
     {
@@ -26,19 +28,19 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
         await base.OnActivateAsync(cancellationToken);
 
         // Get the IMEI from the grain's key
-        // If you created the grain with GrainFactory.GetGrain<IWsGrain>("device123"),
-        // then "device123" is the primary key
+        // If you created the grain with GrainFactory.GetGrain<IWsGrain>("device123") then "device123" is the primary key
 
         // Testing this
-        if (this.GetPrimaryKeyString() == "GeneralWS")
-        {
-            var streamProvider = this.GetStreamProvider("StreamProvider");
-            var streamId = StreamId.Create("AtlasChange", "ALL");
-            _stream = streamProvider.GetStream<AtlasChangeEvent>(streamId);
-            await _stream.SubscribeAsync(this);
-        }
+        //if (this.GetPrimaryKeyString() == "GeneralWS")
+        //{
+        //    var streamProvider = this.GetStreamProvider("StreamProvider");
+        //    var streamId = StreamId.Create("AtlasChange", "ALL");
+        //    _stream = streamProvider.GetStream<AtlasChangeEvent>(streamId);
+        //    await _stream.SubscribeAsync(this);
+        //}
 
-
+        _stream = this.GetStreamProvider(_streamProvider)
+                .GetStream<AtlasChangeEvent>(StreamId.Create("AtlasChange", "ALL"));
 
         //await SubscribeToAtlasStream(this.GetPrimaryKeyString());
     }
@@ -49,21 +51,29 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
 
         // Send current state to new connection
         var points = await GetAllPoints();
-        await _hub.Clients.Client(connectionId).InitializeState(points);
+        await _hub.Clients.Client(connectionId)
+            .InitializeState(points);
+    }
+
+    private async Task OnNextNumber(AtlasChangeEvent evt, StreamSequenceToken? token)
+    {
+        //if (this.GetPrimaryKeyString() == "GeneralWS" && _connections.Any())
+        Console.WriteLine($"G_WS => Imei {evt.Imei} \t {evt.Long} \t {evt.Lat} \t {evt.Color}");
+        await _hub.Clients.All.SendStateChange(evt);
+
+        _points[evt.Imei] = new Pt
+        {
+            Name = evt.Imei,
+            Lat = evt.Lat,
+            Lng = evt.Long,
+            C = evt.Color == "RED" ? 'R' : 'G',
+        };
     }
 
     public Task RemoveConnection(string connectionId)
     {
         _connections.Remove(connectionId);
         return Task.CompletedTask;
-    }
-
-    public async Task SubscribeToAtlasStream(string imei)
-    {
-        var streamProvider = this.GetStreamProvider("StreamProvider");
-        var streamId = StreamId.Create("AtlasChange", imei);
-        var stream = streamProvider.GetStream<AtlasChangeEvent>(streamId);
-        await stream.SubscribeAsync(this);
     }
 
     public Task OnCompletedAsync()
@@ -93,22 +103,38 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
             Lng = item.Long,
             C = item.Color == "RED" ? 'R' : 'G',
         };
-
-        //return Task.CompletedTask;
     }
 
     public Task<List<Pt>> GetAllPoints()
     {
         return Task.FromResult(_points.Select(x => x.Value).ToList());
     }
+
+    public async Task StartConsuming()
+    {
+        if (_stream == null)
+            return;
+
+        _subscription = await _stream.SubscribeAsync(OnNextNumber);
+        Console.WriteLine($"Consumer {this.GetPrimaryKeyString()}: Started consuming");
+    }
+
+    public async Task StopConsuming()
+    {
+        if (_subscription != null)
+        {
+            await _subscription.UnsubscribeAsync();
+            _subscription = null;
+            Console.WriteLine($"Consumer {this.GetPrimaryKeyString()}: Stopped consuming");
+        }
+    }
 }
 
 public interface IWsGrain : IGrainWithStringKey
 {
-    Task SubscribeToAtlasStream(string imei);
     Task<List<Pt>> GetAllPoints();
-
-
     Task AddConnection(string connectionId);
     Task RemoveConnection(string connectionId);
+    Task StartConsuming();
+    Task StopConsuming();
 }

@@ -69,8 +69,6 @@ app.MapGet("/orleans/{imei}",
         // Create and persist a grain with the shortened ID and full URL
         var atlasGrain = grains.GetGrain<IAtlas>(imei);
 
-        await atlasGrain.SayHello("Hola caracola");
-
         var batteryLevel = await atlasGrain.GetBatteryLevel();
 
         return Results.Ok(batteryLevel);

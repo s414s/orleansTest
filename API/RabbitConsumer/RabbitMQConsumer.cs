@@ -29,6 +29,9 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         await Task.Delay(5000, cancellationToken);
         Console.WriteLine("===========Starting WORKER=============");
 
+        var x = _grains.GetGrain<IWsGrain>("GeneralWS");
+        await x.StartConsuming();
+
         // Initialize RabbitMQ connection and channel
         var factory = new ConnectionFactory
         {
