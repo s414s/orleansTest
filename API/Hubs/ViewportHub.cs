@@ -29,10 +29,22 @@ public class ViewportHub : Hub<IViewportClient>
         }
     }
 
+    public async Task Flush(List<AtlasChangeEvent> changes)
+    {
+        if (Clients != null)
+        {
+            await Clients.All.Flush(changes);
+        }
+    }
+
     public override async Task OnConnectedAsync()
     {
-        var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
-        await grain.AddConnection(Context.ConnectionId);
+        //var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
+        //await grain.AddConnection(Context.ConnectionId);
+
+        var userGrain = _grainFactory.GetGrain<IUserGrain>(Context.ConnectionId);
+        await userGrain.Start();
+
         await base.OnConnectedAsync();
 
         await Clients.All.ReceiveMessage($"{Context.ConnectionId} has joined"); // Name of the method invoked on the client
@@ -43,6 +55,7 @@ public class ViewportHub : Hub<IViewportClient>
     {
         var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
         await grain.RemoveConnection(Context.ConnectionId);
+
         await base.OnDisconnectedAsync(exception);
     }
 }

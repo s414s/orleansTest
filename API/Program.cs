@@ -60,6 +60,7 @@ app.UseCors();
 // Map the SignalR Hub to an endpoint
 //app.MapHub<LocationHub>("/location");
 app.MapHub<ViewportHub>("viewport");
+app.MapHub<ViewportHub>("viewport2");
 
 app.MapControllers();
 
