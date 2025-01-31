@@ -39,11 +39,11 @@ public class ViewportHub : Hub<IViewportClient>
 
     public override async Task OnConnectedAsync()
     {
-        //var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
-        //await grain.AddConnection(Context.ConnectionId);
+        var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
+        await grain.AddConnection(Context.ConnectionId);
 
-        var userGrain = _grainFactory.GetGrain<IUserGrain>(Context.ConnectionId);
-        await userGrain.Start();
+        //var userGrain = _grainFactory.GetGrain<IUserGrain>(Context.ConnectionId);
+        //await userGrain.Start();
 
         await base.OnConnectedAsync();
 

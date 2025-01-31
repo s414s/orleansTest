@@ -37,8 +37,8 @@ public sealed class Atlas : Grain, IAtlas
     {
         //Console.WriteLine($"RabbitMQ msg received on {IdentityString} battery: {msg.Battery}");
         _atState.State.Battery = msg.Battery;
-        _atState.State.Long = msg.Long;
-        _atState.State.Lat = msg.Lat;
+        _atState.State.Long = Math.Round(msg.Long, 10);
+        _atState.State.Lat = Math.Round(msg.Lat, 10);
 
         await _atState.WriteStateAsync();
 

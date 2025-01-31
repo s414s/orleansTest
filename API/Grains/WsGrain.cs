@@ -50,9 +50,18 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
         _connections.Add(connectionId);
 
         // Send current state to new connection
-        var points = await GetAllPoints();
-        await _hub.Clients.Client(connectionId)
-            .InitializeState(points);
+        //var points = await GetAllPoints();
+
+        var pointsChunks = _points
+            .Select(x => x.Value)
+            .Chunk(1000);
+
+        foreach (var points in pointsChunks)
+        {
+            await _hub.Clients.Client(connectionId)
+                .InitializeState(points.ToList());
+        }
+
     }
 
     private async Task OnNextNumber(AtlasChangeEvent evt, StreamSequenceToken? token)
@@ -107,8 +116,19 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
 
     public Task<List<Pt>> GetAllPoints()
     {
-        return Task.FromResult(_points.Select(x => x.Value).ToList());
+        //return Task.FromResult(_points.Select(x => x.Value).ToList());
+        return Task.FromResult(_points.Select(x => x.Value).Chunk(100).First().ToList());
     }
+
+    //public Task<List<Pt>> GetAllPoints(int page = 1, int pageSize = 100)
+    //{
+    //    return Task.FromResult(
+    //        _points.Select(x => x.Value)
+    //               .Skip((page - 1) * pageSize)
+    //               .Take(pageSize)
+    //               .ToList()
+    //    );
+    //}
 
     public async Task StartConsuming()
     {
