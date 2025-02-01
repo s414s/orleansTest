@@ -24,11 +24,11 @@ public static class OrleansConfiguration
                 //})
                 //.AddMemoryStreams("StreamProvider")
                 //.AddMemoryGrainStorage("PubSubStore")
-                .UseDashboard(options =>
-                {
-                    options.Username = "root";
-                    options.Password = "root";
-                })
+                //.UseDashboard(options =>
+                //{
+                //    options.Username = "root";
+                //    options.Password = "root";
+                //})
                 .ConfigureLogging(logging =>
                 {
                     logging.AddConsole();
@@ -45,15 +45,15 @@ public static class OrleansConfiguration
 
             siloBuilder.Configure<GrainCollectionOptions>(options =>
             {
+                options.CollectionAge = TimeSpan.FromSeconds(20);
+                options.CollectionQuantum = TimeSpan.FromSeconds(5);
+                options.ActivationTimeout = TimeSpan.FromSeconds(30);
+
                 //options.CollectionAge = TimeSpan.FromDays(1);
                 //options.ActivationTimeout = TimeSpan.FromMinutes(5);
 
                 //options.CollectionAge = TimeSpan.FromMinutes(2);
                 //options.ActivationTimeout = TimeSpan.FromMinutes(1);
-
-                options.CollectionAge = TimeSpan.FromSeconds(20);
-                options.CollectionQuantum = TimeSpan.FromSeconds(5);
-                options.ActivationTimeout = TimeSpan.FromSeconds(30);
 
                 //options.ActivationTimeout = TimeSpan.FromSeconds(30);
 

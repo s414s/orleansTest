@@ -4,29 +4,23 @@ namespace API.Grains;
 
 public sealed class Atlas : Grain, IAtlas
 {
-    private readonly ILogger _logger;
+    //private readonly ILogger _logger;
     private int _batteryLevel;
     private readonly IPersistentState<AtlasState> _atState;
 
     //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
     public Atlas(
-        ILogger<Atlas> logger,
+        //ILogger<Atlas> logger,
         [PersistentState("atlasState", "AtlasStateStorageProvider")] IPersistentState<AtlasState> atState
         )
     {
-        _logger = logger;
+        //_logger = logger;
         _atState = atState;
     }
 
     public Task<int> GetBatteryLevel()
     {
         return Task.FromResult(_atState.State.Battery);
-    }
-
-    public Task ReadMsg(string msg)
-    {
-        _batteryLevel = new Random().Next(1, 100);
-        return Task.CompletedTask;
     }
 
     public async Task UpdateFromRabbit(RabbitMQMessage msg)
@@ -47,7 +41,6 @@ public sealed class Atlas : Grain, IAtlas
         };
 
         var grain = GrainFactory.GetGrain<IWsGrain>("GeneralWS");
-
         await grain.GetAtlasChangeEvent(changeEvent);
     }
 
