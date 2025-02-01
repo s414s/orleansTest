@@ -44,7 +44,7 @@ public sealed class Atlas : Grain, IAtlas
 
         var changeEvent = new AtlasChangeEvent
         {
-            Imei = this.GetPrimaryKeyString(),
+            Imei = this.GetPrimaryKeyLong(),
             Long = _atState.State.Long,
             Lat = _atState.State.Lat,
             Color = _atState.State.Battery > 50 ? "GREEN" : "RED",

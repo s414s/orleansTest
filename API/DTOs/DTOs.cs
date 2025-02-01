@@ -42,7 +42,7 @@ public record RabbitMQMessage
 public record AtlasChangeEvent
 {
     [Id(0)]
-    public required string Imei { get; init; }
+    public required long Imei { get; init; }
 
     [Id(1)]
     public required double Long { get; init; }
@@ -67,7 +67,7 @@ public class Pt
     public required double Lng { get; set; }
 
     [Id(2)]
-    public required string Name { get; set; }
+    public required long Imei { get; set; }
 
     [Id(3)]
     public required char C { get; set; }

@@ -8,7 +8,7 @@ namespace API.Grains;
 //https://github.com/OrleansContrib/SignalR.Orleans
 public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
 {
-    private readonly Dictionary<string, Pt> _points;
+    private readonly Dictionary<long, Pt> _points;
     private readonly IHubContext<ViewportHub, IViewportClient> _hub;
     private readonly HashSet<string> _connections = [];
     private IAsyncStream<AtlasChangeEvent>? _stream;
@@ -67,12 +67,12 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
     private async Task OnNextNumber(AtlasChangeEvent evt, StreamSequenceToken? token)
     {
         //if (this.GetPrimaryKeyString() == "GeneralWS" && _connections.Any())
-        Console.WriteLine($"G_WS => Imei {evt.Imei} \t {evt.Long} \t {evt.Lat} \t {evt.Color}");
+        Console.WriteLine($"G_WS => Imei {evt.Imei:D15} \t {evt.Long} \t {evt.Lat} \t {evt.Color}");
         await _hub.Clients.All.SendStateChange(evt);
 
         _points[evt.Imei] = new Pt
         {
-            Name = evt.Imei,
+            Imei = evt.Imei,
             Lat = evt.Lat,
             Lng = evt.Long,
             C = evt.Color == "RED" ? 'R' : 'G',
@@ -102,12 +102,12 @@ public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
         if (this.GetPrimaryKeyString() == "GeneralWS" && _connections.Any())
         {
             Console.WriteLine($"G_WS => Imei {item.Imei} \t {item.Long} \t {item.Lat} \t {item.Color}");
-            await _hub.Clients.All.SendStateChange(item); // TODO - make async?
+            await _hub.Clients.All.SendStateChange(item);
         }
 
         _points[item.Imei] = new Pt
         {
-            Name = item.Imei,
+            Imei = item.Imei,
             Lat = item.Lat,
             Lng = item.Long,
             C = item.Color == "RED" ? 'R' : 'G',

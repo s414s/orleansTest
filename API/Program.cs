@@ -71,7 +71,7 @@ app.MapGet("/orleans/{imei}",
         //var host = $"{request.Body}://{request.Host.Value}";
 
         // Create and persist a grain with the shortened ID and full URL
-        var atlasGrain = grains.GetGrain<IAtlas>(imei);
+        var atlasGrain = grains.GetGrain<IAtlas>(long.Parse(imei));
 
         var batteryLevel = await atlasGrain.GetBatteryLevel();
 
@@ -81,7 +81,7 @@ app.MapGet("/orleans/{imei}",
 app.MapGet("/orleansGetInfo/{imei}",
     static async (IGrainFactory grains, HttpRequest request, string imei) =>
     {
-        var atlasGrain = grains.GetGrain<IAtlas>(imei);
+        var atlasGrain = grains.GetGrain<IAtlas>(long.Parse(imei));
         var batteryLevel = await atlasGrain.GetBatteryLevel();
 
         return Results.Ok(batteryLevel);

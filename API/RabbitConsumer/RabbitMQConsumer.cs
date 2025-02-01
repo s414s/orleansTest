@@ -82,7 +82,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
                 ?? throw new Exception("msg is NULL");
 
-            var atlasGrain = _grains.GetGrain<IAtlas>(msg.Imei);
+            var atlasGrain = _grains.GetGrain<IAtlas>(long.Parse(msg.Imei));
             await atlasGrain.UpdateFromRabbit(msg);
 
             if (_channel != null && !_channel.IsClosed)
