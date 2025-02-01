@@ -6,6 +6,7 @@ using Orleans.Streams;
 namespace API.Grains;
 
 //https://github.com/OrleansContrib/SignalR.Orleans
+[KeepAlive]
 public sealed class WsGrain : Grain, IWsGrain, IAsyncObserver<AtlasChangeEvent>
 {
     private readonly Dictionary<long, Pt> _points;
