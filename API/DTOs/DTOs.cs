@@ -67,7 +67,7 @@ public class Pt
     public required double Lng { get; set; }
 
     [Id(2)]
-    public required long Imei { get; set; }
+    public required string Imei { get; set; }
 
     [Id(3)]
     public required char C { get; set; }

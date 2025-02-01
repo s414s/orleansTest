@@ -22,19 +22,8 @@ public static class OrleansConfiguration
                 //        options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
                 //    }));
                 //})
-                .AddMemoryStreams("StreamProvider", b =>
-                {
-                    b.ConfigurePullingAgent(ob => ob.Configure(options =>
-                    {
-                        //options.StreamInactivityPeriod = TimeSpan.FromDays(3650);
-                        //options.StreamInactivityPeriod = TimeSpan.FromDays(1);
-                        options.StreamInactivityPeriod = TimeSpan.FromMinutes(1);
-
-                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(10);
-                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
-                    }));
-                })
-                .AddMemoryGrainStorage("PubSubStore")
+                //.AddMemoryStreams("StreamProvider")
+                //.AddMemoryGrainStorage("PubSubStore")
                 .UseDashboard(options =>
                 {
                     options.Username = "root";
@@ -59,8 +48,14 @@ public static class OrleansConfiguration
                 //options.CollectionAge = TimeSpan.FromDays(1);
                 //options.ActivationTimeout = TimeSpan.FromMinutes(5);
 
-                options.CollectionAge = TimeSpan.FromMinutes(2);
-                options.ActivationTimeout = TimeSpan.FromMinutes(1);
+                //options.CollectionAge = TimeSpan.FromMinutes(2);
+                //options.ActivationTimeout = TimeSpan.FromMinutes(1);
+
+                options.CollectionAge = TimeSpan.FromSeconds(20);
+                options.CollectionQuantum = TimeSpan.FromSeconds(5);
+                options.ActivationTimeout = TimeSpan.FromSeconds(30);
+
+                //options.ActivationTimeout = TimeSpan.FromSeconds(30);
 
                 //options.CollectionQuantum = TimeSpan.FromSeconds(1);
                 //options.CollectionAge = TimeSpan.FromSeconds(10);
