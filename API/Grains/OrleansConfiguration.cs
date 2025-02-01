@@ -56,35 +56,52 @@ public static class OrleansConfiguration
                 //options.ActivationTimeout = TimeSpan.FromMinutes(1);
 
                 //options.ActivationTimeout = TimeSpan.FromSeconds(30);
-
                 //options.CollectionQuantum = TimeSpan.FromSeconds(1);
                 //options.CollectionAge = TimeSpan.FromSeconds(10);
             });
 
-            siloBuilder.AddAdoNetGrainStorage(
-                name: "AtlasStateStorageProvider",
-                options =>
-                {
-                    // https://github.com/dotnet/orleans/issues/7644
-                    // https://github.com/dotnet/orleans/tree/main/src/AdoNet/Shared
-                    options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
-                    options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209;Multiplexing=true";
-                });
+            siloBuilder.UseDynamoDBClustering(options =>
+            {
+                options.TableName = "OrleansMembershipTable";
+                options.Service = "http://localhost:8000";
+                //options.UpdateIfExists = false;
+                //options.AccessKey = "local";
+                //options.SecretKey = "local";
+            });
 
-            siloBuilder.UseAdoNetClustering(
-                options =>
-                {
-                    options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
-                    options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209";
-                });
+            siloBuilder.AddDynamoDBGrainStorage("AtlasStateStorageProvider", options =>
+            {
+                options.TableName = "OrleansGrainStorage";
+                options.Service = "http://localhost:8000";
+                //options.UpdateIfExists = false;
+                //options.AccessKey = "local";
+                //options.SecretKey = "local";
+            });
 
-            siloBuilder.AddAdoNetGrainStorageAsDefault(
-                options =>
-                {
-                    // https://github.com/dotnet/orleans/tree/main/src/AdoNet/Shared
-                    options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
-                    options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209";
-                });
+            //siloBuilder.AddAdoNetGrainStorage(
+            //    name: "AtlasStateStorageProvider",
+            //    options =>
+            //    {
+            //        // https://github.com/dotnet/orleans/issues/7644
+            //        // https://github.com/dotnet/orleans/tree/main/src/AdoNet/Shared
+            //        options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
+            //        options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209;Multiplexing=true";
+            //    });
+
+            //siloBuilder.UseAdoNetClustering(
+            //    options =>
+            //    {
+            //        options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
+            //        options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209";
+            //    });
+
+            //siloBuilder.AddAdoNetGrainStorageAsDefault(
+            //    options =>
+            //    {
+            //        // https://github.com/dotnet/orleans/tree/main/src/AdoNet/Shared
+            //        options.Invariant = "Npgsql"; // ADO.NET invariant for PostgreSQL
+            //        options.ConnectionString = "Host=localhost;Port=5432;Database=orleans;Username=postgres;Password=2209";
+            //    });
 
             //.UseLocalHostClustering(siloPort: 11111, gatewayPort: 30000) // Explicitly setting ports
 
