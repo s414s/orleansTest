@@ -1,4 +1,7 @@
 ﻿using Orleans.Configuration;
+using Orleans.Runtime;
+using Proto;
+using System.Net;
 
 namespace API.Grains;
 
@@ -11,7 +14,7 @@ public static class OrleansConfiguration
         builder.Host.UseOrleans(siloBuilder =>
         {
             siloBuilder
-                .UseLocalhostClustering()
+                //.UseLocalhostClustering()
                 //.AddMemoryStreams<DefaultMemoryMessageBodySerializer>("StreamProvider", b =>
                 //{
                 //    b.ConfigurePullingAgent(ob => ob.Configure(options =>
@@ -35,12 +38,37 @@ public static class OrleansConfiguration
                     logging.SetMinimumLevel(LogLevel.Debug); // Enable detailed logs
                 });
 
-            //siloBuilder.UseSignalR().RegisterHub<ChatHub>();
+            //siloBuilder.ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000);
 
             siloBuilder.Configure<ClusterOptions>(options =>
             {
                 options.ClusterId = "dev-cluster";
                 options.ServiceId = "orleans-api";
+            });
+
+            siloBuilder.Configure<ClusterMembershipOptions>(options =>
+              {
+                  // Increase timeouts for development
+                  options.ProbeTimeout = TimeSpan.FromSeconds(10);
+                  options.TableRefreshTimeout = TimeSpan.FromSeconds(6);
+
+                  // Adjust probe parameters
+                  //This one is particularly important for a single-silo setup.
+                  //This tells Orleans that only one vote is needed to declare a silo as dead
+                  //(which makes sense since you only have one silo).
+                  options.NumVotesForDeathDeclaration = 1;
+                  options.NumMissedProbesLimit = 3;
+                  options.TableRefreshTimeout = TimeSpan.FromSeconds(6);
+                  options.DeathVoteExpirationTimeout = TimeSpan.FromSeconds(60);
+                  options.IAmAliveTablePublishTimeout = TimeSpan.FromSeconds(5);
+              });
+
+            // Configure silo endpoints
+            siloBuilder.Configure<EndpointOptions>(options =>
+            {
+                options.AdvertisedIPAddress = IPAddress.Loopback;
+                options.SiloPort = 11111;
+                options.GatewayPort = 30000;
             });
 
             siloBuilder.Configure<GrainCollectionOptions>(options =>
@@ -62,6 +90,7 @@ public static class OrleansConfiguration
 
             siloBuilder.UseDynamoDBClustering(options =>
             {
+                options.CreateIfNotExists = true;
                 options.TableName = "OrleansMembershipTable";
                 options.Service = "http://localhost:8000";
                 //options.UpdateIfExists = false;
@@ -71,6 +100,7 @@ public static class OrleansConfiguration
 
             siloBuilder.AddDynamoDBGrainStorage("AtlasStateStorageProvider", options =>
             {
+                options.CreateIfNotExists = true;
                 options.TableName = "OrleansGrainStorage";
                 options.Service = "http://localhost:8000";
                 //options.UpdateIfExists = false;
