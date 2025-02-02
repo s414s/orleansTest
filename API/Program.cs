@@ -100,7 +100,7 @@ app.MapGet("/orleansGetInfo/{imei}",
 app.MapGet("/getAllPoints",
     static async (IGrainFactory grains, HttpRequest request) =>
     {
-        var wsGrain = grains.GetGrain<IWsGrain>("GeneralWS");
+        var wsGrain = grains.GetGrain<IWsGrain>(0);
         return Results.Ok(await wsGrain.GetAllPoints());
     });
 

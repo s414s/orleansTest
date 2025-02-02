@@ -20,7 +20,7 @@ public class ViewportHub : Hub<IViewportClient>
         await Clients.All.ReceiveMessage($"{Context.ConnectionId}: {message}");
     }
 
-    public async Task SendStateChange(AtlasChangeEvent atlasChange)
+    public async Task SendStateChange(Pt atlasChange)
     {
         if (Clients != null)
         {
@@ -39,7 +39,7 @@ public class ViewportHub : Hub<IViewportClient>
 
     public override async Task OnConnectedAsync()
     {
-        var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
+        var grain = _grainFactory.GetGrain<IWsGrain>(0);
         await grain.AddConnection(Context.ConnectionId);
 
         //var userGrain = _grainFactory.GetGrain<IUserGrain>(Context.ConnectionId);
@@ -53,7 +53,7 @@ public class ViewportHub : Hub<IViewportClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var grain = _grainFactory.GetGrain<IWsGrain>("GeneralWS");
+        var grain = _grainFactory.GetGrain<IWsGrain>(0);
         await grain.RemoveConnection(Context.ConnectionId);
 
         await base.OnDisconnectedAsync(exception);

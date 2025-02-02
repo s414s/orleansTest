@@ -40,7 +40,7 @@ public sealed class Atlas : Grain, IAtlas
             Color = _atState.State.Battery > 50 ? "GREEN" : "RED",
         };
 
-        var grain = GrainFactory.GetGrain<IWsGrain>("GeneralWS");
+        var grain = GrainFactory.GetGrain<IWsGrain>(0);
         await grain.GetAtlasChangeEvent(changeEvent);
     }
 

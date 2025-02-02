@@ -15,7 +15,7 @@ public sealed class WsGrain : Grain, IWsGrain
 
     public WsGrain(IHubContext<ViewportHub, IViewportClient> hub)
     {
-        _points = [];
+        _points = new ConcurrentDictionary<long, Pt>(2, 10_000);
         _hub = hub;
     }
 
@@ -39,7 +39,14 @@ public sealed class WsGrain : Grain, IWsGrain
 
         if (_connections.Count > 0)
         {
-            await _hub.Clients.All.SendStateChange(evt);
+            await _hub.Clients.All.SendStateChange(
+              new Pt
+              {
+                  Imei = evt.Imei.ToString("D15"),
+                  Lat = evt.Lat,
+                  Lng = evt.Long,
+                  C = evt.Color == "RED" ? 'R' : 'G',
+              });
         }
 
         // Atomic
@@ -93,7 +100,7 @@ public sealed class WsGrain : Grain, IWsGrain
     //}
 }
 
-public interface IWsGrain : IGrainWithStringKey
+public interface IWsGrain : IGrainWithIntegerKey
 {
     Task GetAtlasChangeEvent(AtlasChangeEvent evt);
     Task<List<Pt>> GetAllPoints();

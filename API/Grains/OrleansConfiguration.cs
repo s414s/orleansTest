@@ -78,7 +78,7 @@ public static class OrleansConfiguration
                 //options.ActivationTimeout = TimeSpan.FromSeconds(30);
 
 
-                //options.CollectionAge = TimeSpan.FromDays(1);
+                options.CollectionAge = TimeSpan.FromDays(1);
                 //options.ActivationTimeout = TimeSpan.FromMinutes(5);
 
                 //options.CollectionAge = TimeSpan.FromMinutes(2);

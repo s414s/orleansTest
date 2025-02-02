@@ -4,8 +4,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Channels;
 
 namespace API.RabbitConsumer;
 
@@ -26,7 +24,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await Task.Delay(5000, cancellationToken);
+        await Task.Delay(2000, cancellationToken);
         Console.WriteLine("===========Starting WORKER=============");
 
         // Initialize RabbitMQ connection and channel
