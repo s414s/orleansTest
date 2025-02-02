@@ -22,24 +22,13 @@ public static class OrleansConfiguration
                 //        options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
                 //    }));
                 //})
-                .AddMemoryStreams("StreamProvider", b =>
-                {
-                    b.ConfigurePullingAgent(ob => ob.Configure(options =>
-                    {
-                        //options.StreamInactivityPeriod = TimeSpan.FromDays(3650);
-                        //options.StreamInactivityPeriod = TimeSpan.FromDays(1);
-                        options.StreamInactivityPeriod = TimeSpan.FromMinutes(1);
-
-                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(10);
-                        //options.GetQueueMsgsTimerPeriod = TimeSpan.FromSeconds(1);
-                    }));
-                })
+                .AddMemoryStreams("StreamProvider")
                 .AddMemoryGrainStorage("PubSubStore")
-                .UseDashboard(options =>
-                {
-                    options.Username = "root";
-                    options.Password = "root";
-                })
+                //.UseDashboard(options =>
+                //{
+                //    options.Username = "root";
+                //    options.Password = "root";
+                //})
                 .ConfigureLogging(logging =>
                 {
                     logging.AddConsole();
