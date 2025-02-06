@@ -35,7 +35,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            ConsumerDispatchConcurrency = 1,
+            ConsumerDispatchConcurrency = 5,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
