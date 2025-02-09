@@ -7,6 +7,7 @@ using System.Text.Json;
 
 namespace API.RabbitConsumer;
 
+// https://www.rabbitmq.com/docs/confirms#basics
 public class RabbitMqConsumerService : IHostedService, IDisposable
 {
     private readonly string _queueName = "atlas";
@@ -35,11 +36,15 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            ConsumerDispatchConcurrency = 5,
+            ConsumerDispatchConcurrency = 10,
+            //ConsumerDispatchConcurrency = 5,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+
+        // Set QoS before declaring queue or starting consumer (optional)
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 300, global: false, cancellationToken: cancellationToken);
 
         // Declare the queue
         await _channel.QueueDeclareAsync(
@@ -77,6 +82,9 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
                 ?? throw new Exception("msg is NULL");
 
+            var hasMessageBeenRedelivered = eventArgs.Redelivered;
+            var exchange = eventArgs.Exchange;
+
             var atlasGrain = _grains.GetGrain<IAtlas>(long.Parse(msg.Imei));
             await atlasGrain.UpdateFromRabbit(msg);
 
@@ -90,6 +98,15 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
+            if (_channel != null && !_channel.IsClosed)
+            {
+                await _channel.BasicNackAsync(
+                    deliveryTag: eventArgs.DeliveryTag,
+                    multiple: false,
+                    requeue: true,
+                    cancellationToken: _cancellationTokenSource.Token);
+            }
+
             Console.WriteLine($"Error processing message: {ex}");
             // Optionally implement retry logic or dead letter queue here
         }
