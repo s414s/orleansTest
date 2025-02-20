@@ -51,7 +51,7 @@ public record AtlasChangeEvent
     public required double Lat { get; init; }
 
     [Id(3)]
-    public required string Color { get; init; }
+    public required char Color { get; init; }
 }
 
 // =======================================

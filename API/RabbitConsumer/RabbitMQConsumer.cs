@@ -25,7 +25,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await Task.Delay(2000, cancellationToken);
+        //await Task.Delay(1000, cancellationToken);
         Console.WriteLine("===========Starting WORKER=============");
 
         // Initialize RabbitMQ connection and channel
@@ -37,7 +37,6 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             Password = "guest",
             VirtualHost = "/",
             ConsumerDispatchConcurrency = 10,
-            //ConsumerDispatchConcurrency = 5,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
@@ -75,15 +74,17 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
     {
         try
         {
-            var body = eventArgs.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
             //Console.WriteLine($" [x] Received {message}");
 
-            var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message)
-                ?? throw new Exception("msg is NULL");
+            // Option A
+            //var body = eventArgs.Body.ToArray();
+            //var message = Encoding.UTF8.GetString(body);
+            //var msg = JsonSerializer.Deserialize<RabbitMQMessage>(message) ?? throw new Exception("msg is NULL");
 
-            var hasMessageBeenRedelivered = eventArgs.Redelivered;
-            var exchange = eventArgs.Exchange;
+            var msg = ZeroAllocDeserializer(eventArgs);
+
+            //var hasMessageBeenRedelivered = eventArgs.Redelivered;
+            //var exchange = eventArgs.Exchange;
 
             var atlasGrain = _grains.GetGrain<IAtlas>(long.Parse(msg.Imei));
             await atlasGrain.UpdateFromRabbit(msg);
@@ -109,6 +110,12 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
             Console.WriteLine($"Error processing message: {ex}");
             // Optionally implement retry logic or dead letter queue here
+        }
+        finally
+        {
+            // **IMPORTANT**:  Return the array to the pool.  Do this in a `finally`
+            // block to ensure it happens even if exceptions occur.
+            //ArrayPool<byte>.Shared.Return(rentedBuffer);
         }
     }
 
@@ -144,6 +151,14 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         _cancellationTokenSource.Dispose();
         _channel?.Dispose();
         _connection?.Dispose();
+    }
+
+    private RabbitMQMessage ZeroAllocDeserializer(BasicDeliverEventArgs ea)
+    {
+        var message = Encoding.UTF8.GetString(ea.Body.Span).AsSpan();
+
+        return JsonSerializer.Deserialize<RabbitMQMessage>(message)
+            ?? throw new Exception("msg is NULL");
     }
 }
 

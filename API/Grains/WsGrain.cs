@@ -37,33 +37,28 @@ public sealed class WsGrain : Grain, IWsGrain
         //if (this.GetPrimaryKeyString() == "GeneralWS" && _connections.Any())
         //Console.WriteLine($"G_WS => Imei {evt.Imei:D15} \t {evt.Long} \t {evt.Lat} \t {evt.Color}");
 
+        var newPoint = new Pt
+        {
+            Imei = evt.Imei.ToString("D15"),
+            Lat = evt.Lat,
+            Lng = evt.Long,
+            C = evt.Color == 'R' ? 'R' : 'G',
+        };
+
         if (_connections.Count > 0)
         {
-            await _hub.Clients.All.SendStateChange(
-              new Pt
-              {
-                  Imei = evt.Imei.ToString("D15"),
-                  Lat = evt.Lat,
-                  Lng = evt.Long,
-                  C = evt.Color == "RED" ? 'R' : 'G',
-              });
+            await _hub.Clients.All.SendStateChange(newPoint);
         }
 
         // Atomic
         _points.AddOrUpdate(evt.Imei,
-            new Pt
-            {
-                Imei = evt.Imei.ToString("D15"),
-                Lat = evt.Lat,
-                Lng = evt.Long,
-                C = evt.Color == "RED" ? 'R' : 'G',
-            },
+            newPoint,
             (key, oldValue) =>
             {
                 oldValue.Imei = evt.Imei.ToString("D15");
                 oldValue.Lat = evt.Lat;
                 oldValue.Lng = evt.Long;
-                oldValue.C = evt.Color == "RED" ? 'R' : 'G';
+                oldValue.C = evt.Color == 'R' ? 'R' : 'G';
 
                 return oldValue;
             });

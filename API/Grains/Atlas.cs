@@ -37,7 +37,7 @@ public sealed class Atlas : Grain, IAtlas
             Imei = this.GetPrimaryKeyLong(),
             Long = _atState.State.Long,
             Lat = _atState.State.Lat,
-            Color = _atState.State.Battery > 50 ? "GREEN" : "RED",
+            Color = _atState.State.Battery > 50 ? 'G' : 'R',
         };
 
         var grain = GrainFactory.GetGrain<IWsGrain>(0);

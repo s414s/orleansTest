@@ -104,6 +104,8 @@ public static class OrleansConfiguration
                 options.CreateIfNotExists = true;
                 options.TableName = "OrleansGrainStorage";
                 options.Service = "http://localhost:8000";
+                //options.ReadCapacityUnits = 100;
+                //options.WriteCapacityUnits = 100;
                 //options.UpdateIfExists = false;
                 //options.AccessKey = "local";
                 //options.SecretKey = "local";
