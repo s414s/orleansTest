@@ -10,6 +10,9 @@ namespace API.RabbitConsumer;
 // https://www.rabbitmq.com/docs/confirms#basics
 public class RabbitMqConsumerService : IHostedService, IDisposable
 {
+    private readonly string _exchangeName = "actors_exchange";
+    private readonly string[] _queueNames = ["info", "atlas"];
+
     private readonly string _queueName = "atlas";
     private readonly string _queueName2 = "atlas2";
     private AsyncEventingBasicConsumer? _consumer;
@@ -63,6 +66,9 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         //    autoDelete: false,
         //    arguments: null,
         //    cancellationToken: cancellationToken);
+
+        //await CreateExchanges(cancellationToken);
+        //await CreateQueues(cancellationToken);
 
         // Create a consumer to listen for messages
         _consumer = new AsyncEventingBasicConsumer(_channel);
@@ -164,6 +170,43 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
         return JsonSerializer.Deserialize<RabbitMQMessage>(message)
             ?? throw new Exception("msg is NULL");
+    }
+
+    private async Task CreateQueues(CancellationToken ct)
+    {
+        //Using a Dead Letter Exchange(DLX)
+        var retryHeaders = new Dictionary<string, object?>
+        {
+            { "x-TTL-3000", "deadLetterExchange" },
+            { "x-dead-letter-exchange", "deadLetterExchange" },
+            { "x-dead-letter-routing-key", "deadLetterQueue" } // optional: if you want to override the routing key
+        };
+
+        // Declare the queue; not necessary in consumer???
+        if (_channel != null)
+        {
+            foreach (var queueName in _queueNames)
+            {
+                await _channel.QueueDeclareAsync(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: ct);
+                await _channel.QueueBindAsync(queue: queueName, exchange: _exchangeName, routingKey: queueName, cancellationToken: ct);
+
+                await _channel.QueueDeclareAsync(queue: $"{queueName}.retry", durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: ct);
+                await _channel.QueueBindAsync(queue: $"{queueName}.retry", exchange: $"{_exchangeName}.retry", routingKey: queueName, cancellationToken: ct);
+
+                await _channel.QueueDeclareAsync(queue: $"{queueName}.deadletter", durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: ct);
+                await _channel.QueueBindAsync(queue: $"{queueName}.deadletter", exchange: $"{_exchangeName}.deadletter", routingKey: queueName, cancellationToken: ct);
+            }
+        }
+    }
+
+    private async Task CreateExchanges(CancellationToken ct)
+    {
+        if (_channel != null)
+        {
+            await _channel.ExchangeDeclareAsync(exchange: _exchangeName, type: ExchangeType.Direct, autoDelete: false, durable: true);
+            await _channel.ExchangeDeclareAsync(exchange: $"{_exchangeName}.retry", type: ExchangeType.Direct, autoDelete: false, durable: true);
+            await _channel.ExchangeDeclareAsync(exchange: $"{_exchangeName}.deadletter", type: ExchangeType.Direct, autoDelete: false, durable: true);
+        }
     }
 }
 
