@@ -87,6 +87,14 @@ app.MapGet("/orleansGetInfo/{imei}",
         return Results.Ok(batteryLevel);
     });
 
+app.MapGet("/heapMemoryUsed", static (IGrainFactory grains, HttpRequest request) =>
+    {
+        //var memoryInMB = GC.GetTotalMemory(false) / (1024 * 1024);
+        var memoryInMB = GC.GetTotalMemory(true) / (1024 * 1024);
+
+        return Results.Ok(memoryInMB);
+    });
+
 //app.MapPost("/broacast", static async (IGrainFactory grains) =>
 //    {
 //        var grain = grains.GetGrain<IWsGrain>("GeneralWS");

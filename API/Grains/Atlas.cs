@@ -2,6 +2,7 @@
 
 namespace API.Grains;
 
+[KeepAlive]
 public sealed class Atlas : Grain, IAtlas
 {
     //private readonly ILogger _logger;
@@ -23,7 +24,7 @@ public sealed class Atlas : Grain, IAtlas
         return Task.FromResult(_atState.State.Battery);
     }
 
-    public async Task UpdateFromRabbit(RabbitMQMessage msg)
+    public async ValueTask UpdateFromRabbit(RabbitMQMessage msg)
     {
         //Console.WriteLine($"RabbitMQ msg received on {IdentityString} battery: {msg.Battery}");
         _atState.State.Battery = msg.Battery;

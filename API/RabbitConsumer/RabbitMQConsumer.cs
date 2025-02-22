@@ -39,14 +39,14 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            ConsumerDispatchConcurrency = 10,
+            ConsumerDispatchConcurrency = 2,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         // Set QoS before declaring queue or starting consumer (optional)
-        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 400, global: false, cancellationToken: cancellationToken);
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 300, global: false, cancellationToken: cancellationToken);
 
         // Declare the queue
         await _channel.QueueDeclareAsync(

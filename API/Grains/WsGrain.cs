@@ -1,6 +1,7 @@
 ﻿using API.DTOs;
 using API.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Orleans.Concurrency;
 using System.Collections.Concurrent;
 
 namespace API.Grains;
@@ -32,7 +33,7 @@ public sealed class WsGrain : Grain, IWsGrain
         }
     }
 
-    public async Task GetAtlasChangeEvent(AtlasChangeEvent evt)
+    public async ValueTask GetAtlasChangeEvent(AtlasChangeEvent evt)
     {
         //if (this.GetPrimaryKeyString() == "GeneralWS" && _connections.Any())
         //Console.WriteLine($"G_WS => Imei {evt.Imei:D15} \t {evt.Long} \t {evt.Lat} \t {evt.Color}");
@@ -97,7 +98,9 @@ public sealed class WsGrain : Grain, IWsGrain
 
 public interface IWsGrain : IGrainWithIntegerKey
 {
-    Task GetAtlasChangeEvent(AtlasChangeEvent evt);
+    ValueTask GetAtlasChangeEvent(AtlasChangeEvent evt);
+
+    [ReadOnly]
     Task<List<Pt>> GetAllPoints();
     Task AddConnection(string connectionId);
     Task RemoveConnection(string connectionId);
