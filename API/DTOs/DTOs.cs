@@ -4,10 +4,10 @@
 public record AtlasUpdate
 {
     [Id(0)]
-    public string Imei { get; set; } = "";
+    public required string Imei { get; set; }
 
     [Id(1)]
-    public int Battery { get; set; }
+    public required int Battery { get; set; }
 
 };
 

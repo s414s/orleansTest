@@ -13,7 +13,6 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
     private readonly string _queueName = "atlas";
     private readonly string _queueName2 = "atlas2";
     private AsyncEventingBasicConsumer? _consumer;
-    private AsyncEventingBasicConsumer? _consumer2;
 
     private IGrainFactory _grains;
     private IConnection? _connection;
@@ -46,31 +45,28 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         // Set QoS before declaring queue or starting consumer (optional)
-        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 300, global: false, cancellationToken: cancellationToken);
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 200, global: false, cancellationToken: cancellationToken);
 
-        // Declare the queue
-        await _channel.QueueDeclareAsync(
-            queue: _queueName,
-            durable: false,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null,
-            cancellationToken: cancellationToken);
+        // Declare the queue; not necessary in consumer???
+        //await _channel.QueueDeclareAsync(
+        //    queue: _queueName,
+        //    durable: false,
+        //    exclusive: false,
+        //    autoDelete: false,
+        //    arguments: null,
+        //    cancellationToken: cancellationToken);
 
-        await _channel.QueueDeclareAsync(
-            queue: _queueName2,
-            durable: false,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null,
-            cancellationToken: cancellationToken);
+        //await _channel.QueueDeclareAsync(
+        //    queue: _queueName2,
+        //    durable: false,
+        //    exclusive: false,
+        //    autoDelete: false,
+        //    arguments: null,
+        //    cancellationToken: cancellationToken);
 
         // Create a consumer to listen for messages
         _consumer = new AsyncEventingBasicConsumer(_channel);
         _consumer.ReceivedAsync += HandleMessageAsync;
-
-        _consumer2 = new AsyncEventingBasicConsumer(_channel);
-        _consumer2.ReceivedAsync += HandleMessageAsync;
 
         // Start consuming messages
         var consumerTag = await _channel.BasicConsumeAsync(_queueName, autoAck: false, consumer: _consumer, cancellationToken: cancellationToken);
@@ -119,7 +115,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
                 await _channel.BasicNackAsync(
                     deliveryTag: eventArgs.DeliveryTag,
                     multiple: false,
-                    requeue: true,
+                    requeue: false, // for it to be dead-lettered
                     cancellationToken: _cancellationTokenSource.Token);
             }
 
@@ -162,7 +158,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         _connection?.Dispose();
     }
 
-    private RabbitMQMessage ZeroAllocDeserializer(BasicDeliverEventArgs ea)
+    private static RabbitMQMessage ZeroAllocDeserializer(BasicDeliverEventArgs ea)
     {
         var message = Encoding.UTF8.GetString(ea.Body.Span).AsSpan();
 

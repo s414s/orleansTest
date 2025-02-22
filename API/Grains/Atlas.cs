@@ -2,7 +2,6 @@
 
 namespace API.Grains;
 
-[KeepAlive]
 public sealed class Atlas : Grain, IAtlas
 {
     //private readonly ILogger _logger;

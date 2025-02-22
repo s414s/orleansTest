@@ -92,10 +92,11 @@ public class RabbitMQStreamConsumer : IHostedService, IDisposable
             Console.WriteLine($"Message order: chunkMessageCount={chunkMessageCount}, Offset={offset}, ChunkId={chunkId}");
 
             // Option A
-            var payload = Encoding.UTF8.GetString(message.Data.Contents);
+            //var payload = Encoding.UTF8.GetString(message.Data.Contents);
+            //var msg = JsonSerializer.Deserialize<RabbitMQMessage>(payload);
+            //?? throw new Exception("msg is NULL");
 
-            var msg = JsonSerializer.Deserialize<RabbitMQMessage>(payload)
-                ?? throw new Exception("msg is NULL");
+            var msg = ZeroAllocDeserializer(message.Data.Contents);
 
             var atlasGrain = _grains.GetGrain<IAtlas>(long.Parse(msg.Imei));
             await atlasGrain.UpdateFromRabbit(msg);
@@ -135,12 +136,12 @@ public class RabbitMQStreamConsumer : IHostedService, IDisposable
         //_connection?.Dispose();
     }
 
-    private RabbitMQMessage ZeroAllocDeserializer(ReadOnlySequence<byte> content)
+    private static RabbitMQMessage ZeroAllocDeserializer(ReadOnlySequence<byte> content)
     {
         var message = Encoding.UTF8.GetString(content).AsSpan();
 
-        return JsonSerializer.Deserialize<RabbitMQMessage>(message)
-            ?? throw new Exception("msg is NULL");
+        return JsonSerializer.Deserialize<RabbitMQMessage>(message);
+        //?? throw new Exception("msg is NULL");
     }
 }
 

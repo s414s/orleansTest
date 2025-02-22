@@ -3,7 +3,6 @@ using Proto.Cluster;
 using Proto.Cluster.Partition;
 using Proto.Cluster.Testing;
 using Proto.DependencyInjection;
-using Proto.Remote;
 using Proto.Remote.GrpcNet;
 
 namespace API.ProtoActor;
