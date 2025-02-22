@@ -11,10 +11,13 @@ namespace API.RabbitConsumer;
 public class RabbitMqConsumerService : IHostedService, IDisposable
 {
     private readonly string _queueName = "atlas";
+    private readonly string _queueName2 = "atlas2";
+    private AsyncEventingBasicConsumer? _consumer;
+    private AsyncEventingBasicConsumer? _consumer2;
+
     private IGrainFactory _grains;
     private IConnection? _connection;
     private IChannel? _channel;
-    private AsyncEventingBasicConsumer? _consumer;
     private readonly CancellationTokenSource _cancellationTokenSource;
 
     public RabbitMqConsumerService(IGrainFactory grains)
@@ -43,7 +46,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         // Set QoS before declaring queue or starting consumer (optional)
-        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 300, global: false, cancellationToken: cancellationToken);
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 400, global: false, cancellationToken: cancellationToken);
 
         // Declare the queue
         await _channel.QueueDeclareAsync(
@@ -54,12 +57,24 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             arguments: null,
             cancellationToken: cancellationToken);
 
+        await _channel.QueueDeclareAsync(
+            queue: _queueName2,
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
+
         // Create a consumer to listen for messages
         _consumer = new AsyncEventingBasicConsumer(_channel);
         _consumer.ReceivedAsync += HandleMessageAsync;
 
+        _consumer2 = new AsyncEventingBasicConsumer(_channel);
+        _consumer2.ReceivedAsync += HandleMessageAsync;
+
         // Start consuming messages
         var consumerTag = await _channel.BasicConsumeAsync(_queueName, autoAck: false, consumer: _consumer, cancellationToken: cancellationToken);
+        var consumerTag2 = await _channel.BasicConsumeAsync(_queueName2, autoAck: false, consumer: _consumer, cancellationToken: cancellationToken);
 
         Console.WriteLine("RabbitMQ Consumer started.");
 
@@ -110,12 +125,6 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
             Console.WriteLine($"Error processing message: {ex}");
             // Optionally implement retry logic or dead letter queue here
-        }
-        finally
-        {
-            // **IMPORTANT**:  Return the array to the pool.  Do this in a `finally`
-            // block to ensure it happens even if exceptions occur.
-            //ArrayPool<byte>.Shared.Return(rentedBuffer);
         }
     }
 

@@ -39,8 +39,8 @@ builder.AddOrleans();
 //=============
 
 // Rabbit Consumer
-//builder.Services.AddHostedService<RabbitMqConsumerService>();
-builder.Services.AddHostedService<RabbitMQStreamConsumer>();
+builder.Services.AddHostedService<RabbitMqConsumerService>();
+//builder.Services.AddHostedService<RabbitMQStreamConsumer>();
 
 // Add SignalR
 builder.Services.AddSignalR();
