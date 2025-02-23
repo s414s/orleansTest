@@ -10,6 +10,8 @@ namespace API.RabbitConsumer;
 // https://www.rabbitmq.com/docs/confirms#basics
 public class RabbitMqConsumerService : IHostedService, IDisposable
 {
+    private readonly int _messageTtl = 3000;
+    private readonly int _maxNumberRetries = 3;
     private readonly string _exchangeName = "actors_exchange";
     private readonly string[] _queueNames = ["info", "atlas"];
 
@@ -41,7 +43,7 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
             UserName = "guest",
             Password = "guest",
             VirtualHost = "/",
-            ConsumerDispatchConcurrency = 2,
+            ConsumerDispatchConcurrency = 1,
         };
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
@@ -51,24 +53,11 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 200, global: false, cancellationToken: cancellationToken);
 
         // Declare the queue; not necessary in consumer???
-        //await _channel.QueueDeclareAsync(
-        //    queue: _queueName,
-        //    durable: false,
-        //    exclusive: false,
-        //    autoDelete: false,
-        //    arguments: null,
-        //    cancellationToken: cancellationToken);
+        //await _channel.QueueDeclareAsync(queue: _queueName, durable: false, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
+        //await _channel.QueueDeclareAsync(queue: _queueName2, durable: false, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken);
 
-        //await _channel.QueueDeclareAsync(
-        //    queue: _queueName2,
-        //    durable: false,
-        //    exclusive: false,
-        //    autoDelete: false,
-        //    arguments: null,
-        //    cancellationToken: cancellationToken);
-
-        //await CreateExchanges(cancellationToken);
-        //await CreateQueues(cancellationToken);
+        await CreateExchanges(cancellationToken);
+        await CreateQueues(cancellationToken);
 
         // Create a consumer to listen for messages
         _consumer = new AsyncEventingBasicConsumer(_channel);
@@ -116,6 +105,36 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
+            var exchange = eventArgs.Exchange;
+            var messageId = eventArgs.BasicProperties.MessageId;
+            Console.WriteLine($"[ERROR] -> {exchange} - {messageId}");
+
+            var currentRetryAttempt = 1;
+
+            if (eventArgs.BasicProperties.Headers?.TryGetValue("x-retry", out object? attempt) ?? false)
+            {
+                if (attempt is int a && a > 1)
+                {
+                    currentRetryAttempt = a;
+                }
+            }
+
+            if (currentRetryAttempt >= _maxNumberRetries)
+            {
+
+            }
+
+            // Using a Dead Letter Exchange(DLX)
+            // creo que los hace el productor
+            var retryHeaders = new Dictionary<string, object?>
+            {
+                //{ "x-TTL-3000", "deadLetterExchange" },
+                { "x-ttl-3000", _messageTtl },
+                { "x-dead-letter-exchange", _exchangeName },
+                { "x-dead-letter-routing-key", eventArgs.RoutingKey }, // optional: if you want to override the routing key
+                { "x-retry", eventArgs.RoutingKey } // optional: if you want to override the routing key
+            };
+
             if (_channel != null && !_channel.IsClosed)
             {
                 await _channel.BasicNackAsync(
@@ -174,15 +193,6 @@ public class RabbitMqConsumerService : IHostedService, IDisposable
 
     private async Task CreateQueues(CancellationToken ct)
     {
-        //Using a Dead Letter Exchange(DLX)
-        var retryHeaders = new Dictionary<string, object?>
-        {
-            { "x-TTL-3000", "deadLetterExchange" },
-            { "x-dead-letter-exchange", "deadLetterExchange" },
-            { "x-dead-letter-routing-key", "deadLetterQueue" } // optional: if you want to override the routing key
-        };
-
-        // Declare the queue; not necessary in consumer???
         if (_channel != null)
         {
             foreach (var queueName in _queueNames)

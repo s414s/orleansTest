@@ -2,10 +2,10 @@
 
 namespace API.Grains;
 
+//[KeepAlive]
 public sealed class Atlas : Grain, IAtlas
 {
     //private readonly ILogger _logger;
-    private int _batteryLevel;
     private readonly IPersistentState<AtlasState> _atState;
 
     //The profile state will not be loaded at the time it is injected into the constructor, so accessing it is invalid at that time.The state will be loaded before OnActivateAsync is called.
